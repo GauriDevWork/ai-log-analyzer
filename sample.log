@@ -1,0 +1,3 @@
+PHP Fatal error:  Call to undefined function xyz() in /wp-content/plugins/test/plugin.php:123
+PHP Warning:  Invalid argument supplied for foreach() in /wp-content/themes/mytheme/functions.php on line 45
+PHP Notice:  Undefined index: name in /wp-includes/class-wp-query.php on line 3890
