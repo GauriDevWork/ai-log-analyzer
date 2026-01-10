@@ -66,8 +66,14 @@ class LogParser
             $message = $matches[2];
         }
 
-        // Extract file and line number
+        // Extract file and line number (Format: file.php:123)
         if (preg_match('/in\s+(.*?):(\d+)/i', $line, $matches)) {
+            $file = $matches[1];
+            $lineNumber = (int) $matches[2];
+        }
+
+        // Extract file and line number (Format: file.php on line 45)
+        elseif (preg_match('/in\s+(.*?)\s+on\s+line\s+(\d+)/i', $line, $matches)) {
             $file = $matches[1];
             $lineNumber = (int) $matches[2];
         }
