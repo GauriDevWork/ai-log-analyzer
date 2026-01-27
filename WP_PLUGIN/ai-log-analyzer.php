@@ -30,6 +30,8 @@ require_once AILA_PLUGIN_DIR . 'includes/Classifier/ErrorClassifier.php';
 require_once AILA_PLUGIN_DIR . 'includes/Security/Redactor.php';
 require_once AILA_PLUGIN_DIR . 'includes/AI/AIExplainer.php';
 require_once AILA_PLUGIN_DIR . 'includes/Output/JsonFormatter.php';
+require_once AILA_PLUGIN_DIR . 'includes/Admin/AdminPage.php';
+
 
 /**
  * Plugin bootstrap class
@@ -73,6 +75,9 @@ final class AILA_Plugin {
         // Future-safe place:
         // - load text domain
         // - register admin pages
+        if ( is_admin() ) {
+            new \AILA\Admin\AdminPage();
+        } 
         // - register services
     }
 }
