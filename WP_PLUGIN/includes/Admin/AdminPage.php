@@ -29,6 +29,18 @@ class AdminPage {
             return;
         }
 
+        // Handle API key save
+        if ( isset($_POST['aila_save_api_key']) ) {
+            check_admin_referer('aila_save_api_key');
+
+            $apiKey = sanitize_text_field($_POST['aila_ai_api_key'] ?? '');
+            update_option('aila_ai_api_key', $apiKey);
+
+            echo '<div class="notice notice-success"><p>API key saved.</p></div>';
+        }
+
+
+
         $result = null;
         $error  = null;
 
@@ -68,6 +80,39 @@ class AdminPage {
         ?>
         <div class="wrap">
             <h1>AI Log Analyzer</h1>
+            <h2>AI Settings</h2>
+
+            <form method="post">
+                <?php wp_nonce_field('aila_save_api_key'); ?>
+
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">
+                            <label for="aila_ai_api_key">AI API Key</label>
+                        </th>
+                        <td>
+                            <input
+                                type="password"
+                                id="aila_ai_api_key"
+                                name="aila_ai_api_key"
+                                value="<?php echo esc_attr(get_option('aila_ai_api_key', '')); ?>"
+                                class="regular-text"
+                            />
+                            <p class="description">
+                                Used to generate AI-based explanations for log analysis.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+
+                <p>
+                    <button type="submit" class="button button-secondary" name="aila_save_api_key">
+                        Save API Key
+                    </button>
+                </p>
+            </form>
+
+            <hr>
 
             <form method="post">
                 <?php wp_nonce_field('aila_analyze_logs'); ?>
@@ -108,9 +153,25 @@ class AdminPage {
 
             <?php if ( $result ): ?>
                 <h2>Analysis Result</h2>
-                <pre style="background:#fff; padding:15px; border:1px solid #ccc; max-height:500px; overflow:auto;">
-<?php print_r($result); ?>
-                </pre>
+                <?php if ( $result ): ?>
+                <h2>Analysis Summary</h2>
+
+                <p><strong>Total Lines:</strong> <?php echo esc_html($result['total_lines']); ?></p>
+                <p><strong>Detected Errors:</strong> <?php echo esc_html($result['error_count']); ?></p>
+
+                <?php if ( ! empty($result['ai_summary']['ai_response']) ): ?>
+                    <div class="notice notice-info">
+                        <p><strong>AI Explanation</strong></p>
+                        <pre><?php echo esc_html($result['ai_summary']['ai_response']); ?></pre>
+                    </div>
+                <?php endif; ?>
+
+                <details>
+                    <summary><strong>Raw Analysis Data</strong></summary>
+                    <pre><?php print_r($result); ?></pre>
+                </details>
+            <?php endif; ?>
+
             <?php endif; ?>
         </div>
         <?php

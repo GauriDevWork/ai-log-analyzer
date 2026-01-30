@@ -1,6 +1,6 @@
 <?php
 
-namespace AILogAnalyzer\AI;
+namespace AILA\AI;
 
 /**
  * Generates contextual, human-readable explanations for errors using AI.
@@ -34,24 +34,97 @@ class AIExplainer
     private function buildPrompt(array $error): string
     {
         return <<<PROMPT
-You are a senior WordPress engineer.
+        You are a senior WordPress engineer.
 
-Explain the following error clearly.
-Do NOT suggest code changes.
-Do NOT mention file paths.
+        Explain the following error clearly.
+        Do NOT suggest code changes.
+        Do NOT mention file paths.
 
-Error Type: {$error['type']}
-Message: {$error['message']}
-Source: {$error['source']}
-Severity: {$error['severity']}
+        Error Type: {$error['type']}
+        Message: {$error['message']}
+        Source: {$error['source']}
+        Severity: {$error['severity']}
 
-Respond strictly in this format:
+        Respond strictly in this format:
 
-Explanation:
-Likely Cause:
-Suggested Next Steps:
-PROMPT;
+        Explanation:
+        Likely Cause:
+        Suggested Next Steps:
+        PROMPT;
     }
+
+    public function explainSummary(array $context): array
+{
+    // Always initialize
+    $aiText = '';
+
+    $prompt = "
+        You are a senior WordPress developer.
+
+        Based on the following error summary, explain:
+        1. What the main problems are
+        2. Which issues are critical vs ignorable
+        3. What should be fixed first
+
+        Error Summary:
+        " . json_encode($context, JSON_PRETTY_PRINT);
+
+        $payload = [
+            'model' => 'gpt-4o-mini',
+            'messages' => [
+                [
+                    'role' => 'user',
+                    'content' => $prompt
+                ]
+            ],
+            'temperature' => 0.3,
+        ];
+
+        $ch = curl_init('https://api.openai.com/v1/chat/completions');
+
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => [
+                'Authorization: Bearer ' . $this->apiKey,
+                'Content-Type: application/json',
+            ],
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_TIMEOUT => 30,
+        ]);
+
+        $response = curl_exec($ch);
+
+        if ($response === false) {
+            $error = curl_error($ch);
+            curl_close($ch);
+
+            return [
+                'ai_response' => 'AI request failed: ' . $error,
+            ];
+        }
+
+        curl_close($ch);
+
+        $data = json_decode($response, true);
+
+        if (
+            !is_array($data) ||
+            !isset($data['choices'][0]['message']['content'])
+        ) {
+            return [
+                'ai_response' => 'AI returned an unexpected response.',
+            ];
+        }
+
+        $aiText = $data['choices'][0]['message']['content'];
+
+        return [
+            'ai_response' => trim((string) $aiText),
+        ];
+    }
+
+
 
     /**
      * Call OpenAI API safely.
