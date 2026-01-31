@@ -86,3 +86,49 @@ final class AILA_Plugin {
  * Initialize plugin
  */
 AILA_Plugin::instance();
+
+// JavaScript for admin page
+add_action('admin_enqueue_scripts', function () {
+    wp_enqueue_script(
+        'aila-admin',
+        AILA_PLUGIN_URL . 'assets/admin.js',
+        ['jquery'],
+        AILA_VERSION,
+        true
+    );
+
+    wp_localize_script('aila-admin', 'AILA_AJAX', [
+        'nonce' => wp_create_nonce('aila_ai_explain'),
+    ]);
+});
+
+
+// AJAX handler for explaining errors
+add_action('wp_ajax_aila_explain_error', function () {
+
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('Unauthorized');
+    }
+
+    check_ajax_referer('aila_ai_explain');
+
+    $error = $_POST['error'] ?? null;
+    if (!$error || !is_array($error)) {
+        wp_send_json_error('Invalid error data');
+    }
+
+    $apiKey = get_option('aila_ai_api_key');
+    if (!$apiKey) {
+        wp_send_json_error('AI API key not configured');
+    }
+
+    try {
+        $explainer = new \AILA\AI\AIExplainer($apiKey);
+        $result = $explainer->explainSingleError($error);
+
+        wp_send_json_success($result['ai_response'] ?? '');
+    } catch (\Throwable $e) {
+        wp_send_json_error($e->getMessage());
+    }
+});
+
