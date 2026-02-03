@@ -17,7 +17,7 @@ class AIExplainer
     /**
      * Explain an error using AI (safe wrapper).
      */
-    public function explain(array $error): array
+    public function explainSingleError(array $error): array
     {
         $response = $this->callAI($this->buildPrompt($error));
 
